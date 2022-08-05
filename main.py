@@ -9,6 +9,7 @@ def wait_until_complete(driver):
 driver = webdriver.Firefox()
 
 driver.get("https://itsapp.bjut.edu.cn/uc/wap/login?redirect=https://itsapp.bjut.edu.cn/site/applicationSquare/index?sid=2")
+driver.maximize_window()
 driver.switch_to.frame("loginIframe")
 with open("login") as file:
     (username, password) = file.readline().split(" ")
