@@ -22,4 +22,4 @@ edit `login`
 
 and figure out the rest of it motherfuckers  
 I am not responsible for tech support or any consequence
-# GO FUCK YOURSLEF YOU FUCKING FUCK
+# GO FUCK YOURSELF YOU FUCKING FUCK
