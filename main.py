@@ -125,4 +125,4 @@ while True:
 
     check_in(student_id, student_name, driver)
 
-    #driver.close()
+driver.close()
