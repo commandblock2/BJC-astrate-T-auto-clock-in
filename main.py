@@ -38,7 +38,7 @@ def checked(item):
 
     return red < MAGIC_RED_THRETHOLD
 
-def check_in(student_id, student_name, driver):
+def check_in(student_id, student_name, auth_id_date, driver):
     path = "login_coords/{}{}".format(student_id, student_name)
     if not os.path.exists(path):
         os.makedirs(path)
@@ -51,14 +51,10 @@ def check_in(student_id, student_name, driver):
 
 
         post_string = """[{\\"question_id\\":48,\\"answer\\":{\\"id\\":111,\\"text\\":null}},{\\"question_id\\":36,\\"answer\\":{\\"id\\":71,\\"text\\":\\\"""" + text + """\\",\\"location\\":\\\"""" + coord + """\\"}},{\\"question_id\\":50,\\"answer\\":{\\"id\\":114,\\"text\\":null}},{\\"question_id\\":51,\\"answer\\":{\\"id\\":118,\\"text\\":null}},{\\"question_id\\":52,\\"answer\\":{\\"id\\":121,\\"text\\":null}},{\\"question_id\\":54,\\"answer\\":{\\"id\\":126,\\"text\\":null}},{\\"question_id\\":56,\\"answer\\":{\\"id\\":130,\\"text\\":null}},{\\"question_id\\":58,\\"answer\\":{\\"id\\":134,\\"text\\":null}},{\\"question_id\\":60,\\"answer\\":{\\"id\\":137,\\"text\\":null}},{\\"question_id\\":64,\\"answer\\":{\\"id\\":145,\\"text\\":null}},{\\"question_id\\":65,\\"answer\\":{\\"id\\":149,\\"text\\":null}},{\\"question_id\\":67,\\"answer\\":{\\"id\\":152,\\"text\\":null}},{\\"question_id\\":93,\\"answer\\":{\\"id\\":240,\\"text\\":null}},{\\"question_id\\":94,\\"answer\\":{\\"id\\":244,\\"text\\":null}},{\\"question_id\\":75,\\"answer\\":{\\"id\\":184,\\"text\\":null}},{\\"question_id\\":95,\\"answer\\":{\\"id\\":252,\\"text\\":null}}]"""
-        wait_until_complete(driver)
-        WebDriverWait(driver, 500).until(lambda x: driver.execute_script("return typeof uni !== 'undefined'"))
-        print("uni loaded")
-        time.sleep(5)
+
         script = """
         var xhr = new XMLHttpRequest();
-        args = /\?(.*)/.exec(window.location.href)[1];
-        xhr.open("POST", "https://yqfk.bjut.edu.cn/api/home/butian/daily_store?" + args);
+        xhr.open("POST", "https://yqfk.bjut.edu.cn/api/home/butian/daily_store?{}");
         bearer = uni.getStorageSync('token');
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.setRequestHeader("Authorization", "Bearer " + bearer);
@@ -67,11 +63,10 @@ def check_in(student_id, student_name, driver):
         xhr.onload = console.log;
         console.log(xhr.responseText);
         return xhr.responseText;
-        """.format(post_string).replace('\n', '')
+        """.format("gh={}{}".format(student_id, auth_id_date), post_string).replace('\n', '')
         print(driver.execute_script(script))
         print("{} done".format(student_name))
-    
-    driver.back()
+
 
 
 driver = webdriver.Firefox()
@@ -90,39 +85,27 @@ driver.find_element(by=By.XPATH, value="/html/body/div[3]/div[2]/div[2]/div/div[
 
 
 driver.switch_to.parent_frame()
-wait_until_complete(driver)
 time.sleep(5)
+wait_until_complete(driver)
+
+
+button = driver.find_elements(by=By.CLASS_NAME, value="content-list")[0].find_element(by=By.XPATH, value="./uni-view[5]")
+button.click()
+
+url = driver.current_url
+auth_id_date = re.search("gh=.*?(\&auth_id=.*?\&date=.*)", url).groups()[0]
+driver.back()
+
 load_and_scroll_to_end(driver)
-wait_until_complete(driver)
 time.sleep(5)
-print("idk loaded")
+wait_until_complete(driver)
 
-done_list = []
-
-while True:
-    load_and_scroll_to_end(driver)
-    items_in_lists = driver.find_elements(by=By.CLASS_NAME, value="content-list")
-
-
-    filtered = filter(lambda it: not checked(it), items_in_lists)
-    filtered = list(filter(lambda it: done_list.count(it.text) == 0, filtered))
-    
-    item = None
-
-    if (len(filtered) == 0):
-        break
-    else:
-        item = filtered[0]
-        done_list.append(item.text)
-
+items_in_lists = driver.find_elements(by=By.CLASS_NAME, value="content-list")
+filtered = filter(lambda it: not checked(it), items_in_lists)
+for item in filtered:
     student_id = item.find_element(by=By.XPATH, value="./uni-view[2]").text
     student_name = item.find_element(by=By.XPATH, value="./uni-view[1]").text
-    button = item.find_element(by=By.XPATH, value="./uni-view[5]")
 
-    button.click()
-    wait_until_complete(driver)
-
-
-    check_in(student_id, student_name, driver)
+    check_in(student_id, student_name, auth_id_date, driver)
 
 driver.close()
