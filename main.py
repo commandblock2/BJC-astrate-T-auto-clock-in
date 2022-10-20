@@ -108,4 +108,5 @@ for item in filtered:
 
     check_in(student_id, student_name, auth_id_date, driver)
 
+time.sleep(20)
 driver.close()
