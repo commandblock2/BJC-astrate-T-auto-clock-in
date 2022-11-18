@@ -38,7 +38,7 @@ var data = JSON.parse(xhr.responseText)
 var post_string = JSON.stringify(data)
 
 var xhr = new XMLHttpRequest()
-xhr.open("GET", post_string, false)
+xhr.open("POST", post_url, false)
 bearer = uni.getStorageSync('token')
 xhr.setRequestHeader("Content-Type", "application/json")
 xhr.setRequestHeader("Authorization", "Bearer " + bearer)
