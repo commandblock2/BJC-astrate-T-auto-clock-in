@@ -38,38 +38,22 @@ def checked(item):
 
     return red < MAGIC_RED_THRETHOLD
 
-def check_in(student_id, student_name, auth_id_date, driver):
-    path = "login_coords/{}{}".format(student_id, student_name)
-    if not os.path.exists(path):
-        os.makedirs(path)
-        shutil.copy("default_coord", "{}/coord".format(path))
-
-
-    with open("{}/coord".format(path)) as file:
-        text = file.readline().replace('\n', '')
-        coord = file.readline().replace('\n', '')
-
-
-        post_string = """[{\\"question_id\\":48,\\"answer\\":{\\"id\\":111,\\"text\\":null}},{\\"question_id\\":36,\\"answer\\":{\\"id\\":71,\\"text\\":\\\"""" + text + """\\",\\"location\\":\\\"""" + coord + """\\"}},{\\"question_id\\":50,\\"answer\\":{\\"id\\":114,\\"text\\":null}},{\\"question_id\\":51,\\"answer\\":{\\"id\\":118,\\"text\\":null}},{\\"question_id\\":52,\\"answer\\":{\\"id\\":121,\\"text\\":null}},{\\"question_id\\":54,\\"answer\\":{\\"id\\":126,\\"text\\":null}},{\\"question_id\\":56,\\"answer\\":{\\"id\\":130,\\"text\\":null}},{\\"question_id\\":58,\\"answer\\":{\\"id\\":134,\\"text\\":null}},{\\"question_id\\":60,\\"answer\\":{\\"id\\":137,\\"text\\":null}},{\\"question_id\\":64,\\"answer\\":{\\"id\\":145,\\"text\\":null}},{\\"question_id\\":65,\\"answer\\":{\\"id\\":149,\\"text\\":null}},{\\"question_id\\":67,\\"answer\\":{\\"id\\":152,\\"text\\":null}},{\\"question_id\\":93,\\"answer\\":{\\"id\\":240,\\"text\\":null}},{\\"question_id\\":94,\\"answer\\":{\\"id\\":244,\\"text\\":null}},{\\"question_id\\":75,\\"answer\\":{\\"id\\":184,\\"text\\":null}},{\\"question_id\\":95,\\"answer\\":{\\"id\\":252,\\"text\\":null}}]"""
-
-        script = """
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "https://yqfk.bjut.edu.cn/api/home/butian/daily_store?{}");
-        bearer = uni.getStorageSync('token');
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.setRequestHeader("Authorization", "Bearer " + bearer);
-        xhr.send("{}");
-        xhr.onerror = console.log;
-        xhr.onload = console.log;
-        console.log(xhr.responseText);
-        return xhr.responseText;
-        """.format("gh={}{}".format(student_id, auth_id_date), post_string).replace('\n', '')
-        print(driver.execute_script(script))
+def check_in(student_id, student_name, auth_id_date, auth, date, driver):
+    with open("browser-exec.js") as script:
+        js_content = """
+var student_id = "{}";
+var auth_id_date = "{}";
+var auth = "{}";
+var date = "{}";
+        {}
+        """.format(student_id, auth_id_date, auth, date, script.read())
+        print(driver.execute_script(js_content))
         print("{} done".format(student_name))
 
 
+# whatever you need to use
+driver = webdriver.Firefox(firefox_binary=FirefoxBinary("/usr/bin/firefox-bin"),executable_path="./geckodriver")
 
-driver = webdriver.Firefox()
 
 driver.get("""https://cas.bjut.edu.cn/login?service=https%3A%2F%2Fitsapp.bjut.edu.cn%2Fa_bjut%2Fapi%2Fsso%2Findex%3Fredirect%3Dhttps%253A%252F%252Fitsapp.bjut.edu.cn%252Fuc%252Fapi%252Foauth%252Findex%253Fredirect%253Dhttp%253A%252F%252Fyqfk.bjut.edu.cn%252Fapi%252Flogin%252Fpages-report-index%253Flogin%253D1%2526appid%253D200220501233430304%2526state%253DSTATE%26from%3Dwap""")
 driver.maximize_window()
@@ -94,7 +78,11 @@ button.click()
 
 url = driver.current_url
 auth_id_date = re.search("gh=.*?(\&auth_id=.*?\&date=.*)", url).groups()[0]
+auth, date = re.search("auth_id=(.*?)\&date=(.*)", auth_id_date).groups()
 driver.back()
+print(auth_id_date)
+print(auth)
+print(date)
 
 load_and_scroll_to_end(driver)
 time.sleep(5)
@@ -106,7 +94,7 @@ for item in filtered:
     student_id = item.find_element(by=By.XPATH, value="./uni-view[2]").text
     student_name = item.find_element(by=By.XPATH, value="./uni-view[1]").text
 
-    check_in(student_id, student_name, auth_id_date, driver)
+    check_in(student_id, student_name, auth_id_date, auth, date, driver)
 
 time.sleep(20)
 driver.close()

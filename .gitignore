@@ -5,3 +5,4 @@ coord
 default_coord
 login_coords/
 geckodriver.log
+geckodriver
